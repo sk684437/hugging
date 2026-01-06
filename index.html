@@ -1,9 +1,13 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>樱花季 - Sakura</title>
+    
+    <!-- 使用 Emoji 作为 Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌸</text></svg>">
+    
     <style>
       /* --- 基础页面样式 --- */
       body,
@@ -136,9 +140,78 @@
           opacity: 0;
         }
       }
+
+      /* --- 装饰性樱花 (新增) --- */
+      .decorative-sakura {
+        position: absolute;
+        font-size: 2rem;
+        opacity: 0.3;
+        animation: float 4s ease-in-out infinite;
+        z-index: 0;
+        pointer-events: none;
+      }
+
+      .ds-1 { top: 15%; left: 15%; animation-delay: 0s; }
+      .ds-2 { top: 25%; right: 20%; animation-delay: 1s; }
+      .ds-3 { bottom: 20%; left: 25%; animation-delay: 2s; }
+      .ds-4 { bottom: 30%; right: 15%; animation-delay: 1.5s; }
+
+      @keyframes float {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50% { transform: translateY(-10px) rotate(10deg); }
+      }
+
+      /* --- 鼠标跟随气泡 (新增) --- */
+      .cursor-bubble {
+        position: fixed;
+        width: 20px;
+        height: 20px;
+        background: radial-gradient(circle, #ffb7d5, transparent);
+        border-radius: 50%;
+        pointer-events: none;
+        opacity: 0.6;
+        transition: transform 0.1s ease;
+        z-index: 9999;
+        mix-blend-mode: multiply;
+      }
+
+      /* --- 点击樱花特效 (新增) --- */
+      .click-sakura {
+        position: fixed;
+        font-size: 1.5rem;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 999;
+        transition: all 1s ease-out;
+      }
+
+      /* --- 响应式优化 --- */
+      @media (max-width: 768px) {
+        .content h1 { font-size: 2rem; letter-spacing: 5px; }
+        .content p { font-size: 0.9rem; letter-spacing: 3px; }
+        .friend-links { 
+          top: 15px; 
+          right: 15px; 
+          gap: 15px; 
+          flex-wrap: wrap; 
+          justify-content: flex-end;
+          max-width: 60%;
+        }
+        .friend-links a { font-size: 0.8rem; }
+        .decorative-sakura { font-size: 1.5rem; }
+      }
     </style>
-  </head>
-  <body>
+</head>
+<body>
+    <!-- 鼠标跟随气泡 -->
+    <div class="cursor-bubble" id="cursorBubble"></div>
+
+    <!-- 装饰性樱花 -->
+    <div class="decorative-sakura ds-1">🌸</div>
+    <div class="decorative-sakura ds-2">🌸</div>
+    <div class="decorative-sakura ds-3">🌸</div>
+    <div class="decorative-sakura ds-4">🌸</div>
+
     <!-- 右上角友链区 -->
     <div class="friend-links">
       <a href="https://blog.525553.xyz" target="_blank">我的博客</a>
@@ -154,6 +227,7 @@
 
     <!-- 脚本逻辑 -->
     <script>
+      // 1. 原有的樱花飘落逻辑
       function createPetal() {
         const petal = document.createElement("div");
         petal.classList.add("petal");
@@ -168,8 +242,7 @@
         petal.style.animationDuration = `${duration}s`;
 
         const colors = ["#ffc0cb", "#ffb7b2", "#ffe4e1", "#f8c8dc"];
-        petal.style.backgroundColor =
-          colors[Math.floor(Math.random() * colors.length)];
+        petal.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
 
         document.body.appendChild(petal);
 
@@ -183,7 +256,60 @@
       for (let i = 0; i < 10; i++) {
         setTimeout(createPetal, i * 200);
       }
-    </script>
-  </body>
-</html>
 
+      // 2. 鼠标跟随气泡效果
+      const cursorBubble = document.getElementById('cursorBubble');
+      let mouseX = 0, mouseY = 0;
+      let bubbleX = 0, bubbleY = 0;
+
+      document.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+      });
+
+      function animateBubble() {
+        bubbleX += (mouseX - bubbleX) * 0.1;
+        bubbleY += (mouseY - bubbleY) * 0.1;
+        
+        cursorBubble.style.transform = `translate(${bubbleX - 10}px, ${bubbleY - 10}px)`;
+        
+        requestAnimationFrame(animateBubble);
+      }
+      animateBubble();
+
+      // 3. 点击页面产生樱花特效
+      document.addEventListener('click', (e) => {
+        for (let i = 0; i < 3; i++) {
+          setTimeout(() => {
+            const clickSakura = document.createElement('div');
+            clickSakura.className = 'click-sakura';
+            clickSakura.textContent = '🌸';
+            clickSakura.style.left = e.clientX + 'px';
+            clickSakura.style.top = e.clientY + 'px';
+            clickSakura.style.fontSize = (Math.random() * 1.5 + 0.8) + 'rem';
+            
+            document.body.appendChild(clickSakura);
+            
+            setTimeout(() => {
+              clickSakura.style.opacity = '0.8';
+              clickSakura.style.transform = `translate(${(Math.random() - 0.5) * 100}px, -80px) rotate(${Math.random() * 360}deg) scale(1.2)`;
+            }, 10);
+            
+            setTimeout(() => {
+              clickSakura.remove();
+            }, 1000);
+          }, i * 50);
+        }
+      });
+
+      // 4. 页面加载时的淡入效果增强
+      window.addEventListener('load', () => {
+        document.body.style.opacity = '0';
+        document.body.style.transition = 'opacity 1s ease-in-out';
+        setTimeout(() => {
+          document.body.style.opacity = '1';
+        }, 100);
+      });
+    </script>
+</body>
+</html>
